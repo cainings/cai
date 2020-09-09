@@ -1,0 +1,316 @@
+<template>
+<div>
+    <el-row class="bg-bai padtop-10">
+        <el-col :span="3">
+            <i class="shuxian" style="margin-left:10px"></i>
+            <span>仓库管理</span>
+        </el-col>
+        <el-col :span="2" :offset="15">
+            <el-button plain icon="el-icon-refresh" size="mini">刷新</el-button>
+        </el-col>
+        <el-col :span="2">
+            <el-button plain icon="el-icon-arrow-left" size="mini">返回</el-button>
+        </el-col>
+    </el-row>
+
+    <div class="saixuan">
+        <el-row class="sx_tou">
+            <el-col :span="3" style="padding-left:10px">数据筛选</el-col>
+        </el-row>
+        <el-row class="biank">
+            <el-col :span="5">
+                <label class="color-hui">编号：</label>
+                <input class="hei_30" type="text" placeholder="请输入" v-model="number" />
+            </el-col>
+            <el-col :span="5">
+                <label class="color-hui">仓库名称：</label>
+                <input class="hei_30" type="text" placeholder="请输入" v-model="typeName" />
+            </el-col>
+            <el-col :span="5">
+                <label class="color-hui">部门：</label>
+                <select v-model="bumenId" class="select2_padd">
+                    <option value="0" selected>请选择</option>
+                    <option v-for="(item, index) in bumenList" :key="index" :value="item.id">{{item.stateName}}</option>
+                </select>
+            </el-col>
+            <el-col :span="5">
+                <label class="color-hui">仓库类型：</label>
+                <select v-model="cangkuId" class="select2_padd">
+                    <option value="0" selected>请选择</option>
+                    <option v-for="(item, index) in ckList" :key="index" :value="item.id">{{item.ckName}}</option>
+                </select>
+            </el-col>
+            <el-col :span="4">
+                <el-button type="primary" icon="el-icon-search" @click="select">查询</el-button>
+                <el-button icon="el-icon-refresh">重置</el-button>
+            </el-col>
+        </el-row>
+        <div class="biaoge">
+            <el-row class="title_bg">
+                <el-col :span="3" class="titl2" style="padding-left:10px">数据列表</el-col>
+                <el-col :span="11" :offset="10">
+                    <el-button icon="el-icon-circle-plus" @click="toUrl">新增</el-button>
+                    <el-button icon="el-icon-edit">编辑</el-button>
+                    <el-button icon="el-icon-remove">删除</el-button>
+                    <el-button icon="el-icon-refresh">刷新</el-button>
+                    <el-button icon="el-icon-folder">导出</el-button>
+                </el-col>
+            </el-row>
+            <el-table :data="tableData" style="width: 100%;" ref="multipleTable" :header-cell-style="{background:'#eef1f6',color:'#606266'}" :default-sort="{prop: 'date', order: 'descending'}" border label-class-name="bg-color_hui" :row-style="{'padding':'0'}">
+                <el-table-column type="selection"></el-table-column>
+                <el-table-column prop="name" label="仓库编号"></el-table-column>
+                <el-table-column prop="address" label="仓库名称"></el-table-column>
+                <el-table-column prop="address" label="租赁时间"></el-table-column>
+                <el-table-column prop="address" label="仓库类型"></el-table-column>
+                <el-table-column prop="address" label="所属部门"></el-table-column>
+                <el-table-column label="是否禁用" width="55">
+                    <template slot-scope="scope">
+                        <el-checkbox v-model="scope.row.checked"></el-checkbox>
+                    </template>
+                </el-table-column>
+                <el-table-column label="是否默认" width="55">
+                    <template slot-scope="scope">
+                        <el-checkbox v-model="scope.row.checked2"></el-checkbox>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="address" label="地址"></el-table-column>
+                <el-table-column prop="address" label="面积"></el-table-column>
+                <el-table-column prop="address" label="联系人"></el-table-column>
+                <el-table-column prop="address" label="电话"></el-table-column>
+                <el-table-column label="操作">
+                    <template slot-scope="scope">
+                        <el-button @click.native.prevent="updaeRow(scope.$index, tableData)" type="text" size="small">
+                            <i class="el-icon-edit"></i> 编辑
+                        </el-button>
+                        <el-button @click.native.prevent="deleteRow(scope.$index, tableData)" type="text" size="small">
+                            <i class="el-icon-delete"></i> 删除
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <el-row style="padding:10px 0">
+                <el-col :span="3" :offset="1">
+                    <el-button @click="toggleSelection(tableData)" style="margin-left:50px">全选/取消全选</el-button>
+                </el-col>
+                <el-col :span="10" :offset="8">
+                    <el-pagination background layout="prev, pager, next" :total="1000"></el-pagination>
+                </el-col>
+            </el-row>
+        </div>
+    </div>
+</div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            tableData: [],
+            bumenId: 0,
+            cangkuId: 0,
+            dialogFormVisible: false,
+            ckId: 0,
+            chanpin: "",
+            number: "",
+            multipleTable: [],
+            typeName: '',
+            ckList: [{
+                    id: 1,
+                    ckName: "财务经理",
+                },
+                {
+                    id: 2,
+                    ckName: "信息管理员",
+                },
+                {
+                    id: 3,
+                    ckName: "仓库管理员",
+                },
+                {
+                    id: 4,
+                    ckName: "采购管理员",
+                },
+            ],
+            bumenList: [{
+                    id: 1,
+                    stateName: "财务中心",
+                },
+                {
+                    id: 2,
+                    stateName: "信息技术中心",
+                },
+                {
+                    id: 3,
+                    stateName: "销售服务中心",
+                },
+                {
+                    id: 4,
+                    stateName: "运营推广中心",
+                },
+                {
+                    id: 5,
+                    stateName: "管理中心",
+                },
+                {
+                    id: 6,
+                    stateName: "行政部",
+                },
+            ],
+            tableData: [{
+                    date: "2016-05-02",
+                    name: "王小虎",
+                    address: "上海市 ",
+                    checked: false,
+                    checked2: false
+                },
+                {
+                    date: "2016-05-04",
+                    name: "王小虎",
+                    address: "上海市 ",
+                    checked: false,
+                    checked2: false
+                },
+                {
+                    date: "2016-05-01",
+                    name: "王小虎",
+                    address: "上海市 ",
+                    checked: false,
+                    checked2: false
+                },
+                {
+                    date: "2016-05-03",
+                    name: "王小虎",
+                    address: "上海市",
+                    checked: false,
+                    checked2: false
+                },
+            ],
+        };
+    },
+    methods: {
+            toUrl() {
+      this.$router.push({
+        path: "/index/addd"
+      });
+    },
+        select() {
+            this.$router.push({
+                path:'/index/chaxunAll'
+            })
+        },
+        gjSelect() {},
+        toggleSelection(rows) {
+            if (rows) {
+                rows.forEach((row) => {
+                    this.$refs.multipleTable.toggleRowSelection(row);
+                });
+            } else {
+                this.$refs.multipleTable.clearSelection();
+            }
+        },
+        deleteRow(index, rows) {
+            rows.splice(index, 1);
+        },
+        updaeRow(index, rows) {},
+    },
+};
+</script>
+
+<style scoped>
+.clleHei {
+    height: 10px !important;
+    padding: 0 !important;
+}
+
+.bg-color_hui {
+    background-color: gainsboro;
+}
+
+.shuxian {
+    display: inline-block;
+    width: 5px;
+    height: 20px;
+    background-color: rgba(0, 0, 255, 0.781);
+    margin-left: 20px;
+    margin-right: 5px;
+}
+
+.title_bg {
+    padding-bottom: 20px;
+    border-top: 1px solid gainsboro;
+    padding-top: 20px;
+}
+
+.titl2 {
+    font-weight: bolder;
+    color: rgb(43, 43, 43);
+}
+
+.mg-right {
+    margin-right: 20px;
+}
+
+.color_lan {
+    color: rgba(0, 0, 255, 0.781);
+}
+
+.select_padd {
+    height: 35px;
+    text-indent: 5px;
+    width: 100px;
+}
+
+.select2_padd {
+    height: 35px;
+    text-indent: 5px;
+    width: 150px;
+}
+
+.hei_30 {
+    height: 30px;
+    text-indent: 5px;
+    width: 150px;
+}
+
+.hei2_30 {
+    height: 30px;
+    text-indent: 5px;
+    width: 150px;
+}
+
+.color-hui {
+    color: rgb(116, 113, 113);
+}
+
+.sx_tou {
+    height: 50px;
+    line-height: 50px;
+    font-weight: bold;
+}
+
+.saixuan {
+    width: 98.5%;
+    margin-left: 1.5%;
+    background-color: white;
+    margin-top: 20px;
+}
+
+.bg-bai {
+    background-color: white;
+}
+
+.biank {
+    border-bottom: 1px solid gainsboro;
+    border-top: 1px solid gainsboro;
+    padding: 20px 10px;
+}
+
+.padtop-10 {
+    padding: 10px 0;
+}
+
+.biaoge {
+    padding-top: 20px;
+}
+</style>
